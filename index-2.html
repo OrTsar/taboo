@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f3f4f6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>טאבו קבוצת System – Texas Instruments Israel</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f3f4f6;
+  --panel:#ffffff;
+  --panel-2:#f6f7f9;
+  --line:#e3e6ea;
+  --line-2:#d2d6dc;
+  --text:#14161a;
+  --muted:#5d646e;
+  --ti:#cc0000;
+  --ti-dark:#a30000;
+  --green:#178f4c;
+  --amber:#b86a00;
+  --tc:#cc0000;
+  --tcrgb:204,0,0;
+  --mono: ui-monospace,"SF Mono","Cascadia Mono",Consolas,"Liberation Mono",monospace;
+  --sans: system-ui,-apple-system,"Segoe UI","Heebo","Rubik","Noto Sans Hebrew",Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overscroll-behavior:none}
+body{
+  background:radial-gradient(700px 380px at 100% -8%, rgba(204,0,0,.07), transparent 62%), var(--bg);
+  color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+button{font-family:inherit;cursor:pointer;color:inherit;touch-action:manipulation}
+button:disabled{cursor:not-allowed}
+:focus-visible{outline:3px solid var(--ti);outline-offset:2px}
+
+/* ---------- מסך פתיחה ---------- */
+#setup{
+  min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;
+  padding:calc(20px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+}
+#setup.off{display:none}
+.setup-box{width:min(480px,100%)}
+.brand-line{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:var(--muted);margin-bottom:14px;direction:ltr;justify-content:flex-end}
+.brand-mark{width:10px;height:10px;background:var(--ti);border-radius:2px}
+.setup-box h1{font-size:clamp(36px,11vw,52px);font-weight:900;line-height:1.05;margin-bottom:8px}
+.setup-box h1 .team-line{display:block;color:var(--ti)}
+.lead{color:var(--muted);font-size:16px;margin-bottom:22px;line-height:1.5}
+.field{margin-bottom:18px}
+.field>label{display:block;font-size:15px;color:var(--muted);margin-bottom:8px;font-weight:600}
+.field-note{font-size:13px;color:var(--muted);margin-top:6px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--panel);border:1px solid var(--line);padding:5px;border-radius:14px}
+.seg button{background:transparent;border:0;padding:13px;border-radius:10px;font-size:18px;font-weight:700;color:var(--muted)}
+.seg button.on{background:var(--text);color:#fff}
+.names{display:grid;gap:8px}
+.name-row{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:2px 14px}
+.name-row:focus-within{border-color:var(--c)}
+.name-row .dot{width:12px;height:12px;border-radius:50%;background:var(--c);flex:none}
+.name-row input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--text);font:inherit;font-size:18px;font-weight:600;padding:13px 0}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.two .stepper{display:flex;width:100%}
+.two .stepper button{flex:1;width:auto;min-width:0}
+.two .stepper output{flex:1.2;min-width:0}
+.stepper{display:inline-flex;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;flex:none}
+.stepper button{width:46px;height:48px;background:transparent;border:0;font-size:24px;color:var(--muted)}
+.stepper button:active{background:var(--panel-2);color:var(--text)}
+.stepper output{min-width:56px;text-align:center;font-family:var(--mono);font-size:22px;font-weight:700}
+.primary-btn{width:100%;margin-top:6px;padding:18px;border:0;border-radius:16px;background:var(--ti);color:#fff;font-size:21px;font-weight:900;box-shadow:0 12px 28px -14px rgba(204,0,0,.7)}
+
+/* ---------- מסך משחק ---------- */
+#game{
+  display:none;height:100vh;height:100dvh;width:100%;max-width:560px;margin:0 auto;flex-direction:column;gap:8px;
+  padding:calc(8px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
+  -webkit-user-select:none;user-select:none;overflow:hidden;
+}
+#game.on{display:flex}
+#game > *{flex:none}
+#game > .card{flex:1 1 0}
+
+.bar{grid-area:bar;display:flex;align-items:center;justify-content:space-between;gap:8px;height:38px;min-width:0}
+.title-sm{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+.title-sm small{font-size:11px;font-weight:700;color:var(--ti);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.title-sm b{font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-actions{display:flex;gap:6px;flex:none}
+.chip-btn{height:32px;background:var(--panel);border:1px solid var(--line);padding:0 12px;border-radius:999px;font-size:13px;color:var(--muted);white-space:nowrap}
+.chip-btn.icon{width:36px;padding:0;font-size:15px}
+.chip-btn.on{color:var(--ti);border-color:rgba(204,0,0,.45)}
+
+/* לוח תוצאות */
+.scoreboard{grid-area:score;display:grid;grid-template-columns:repeat(var(--n,2),minmax(0,1fr));gap:8px}
+.team{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 8px 7px;border-radius:14px;background:var(--panel);border:1px solid var(--line);overflow:hidden;min-width:0;transition:border-color .25s,background .25s}
+.team.active{border-color:var(--tc);background:rgba(var(--tcrgb),.07);box-shadow:0 0 0 1px var(--tc)}
+.tname{font-size:13px;font-weight:700;color:var(--muted);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.team.active .tname{color:var(--tc)}
+.score{font-family:var(--mono);font-size:28px;font-weight:800;line-height:1}
+.score.bump{animation:bump .45s ease}
+@keyframes bump{30%{transform:scale(1.35)}}
+.adj{position:absolute;inset:0;display:none;align-items:center;justify-content:space-between;padding:0 6px;background:rgba(255,255,255,.97)}
+.team.editing .adj{display:flex}
+.adj button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);font-size:22px;font-weight:700}
+.adj .val{font-family:var(--mono);font-size:24px;font-weight:800}
+
+/* סטופר */
+.timer{grid-area:timer;display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:5px 14px;color:var(--text)}
+.tnum{display:flex;align-items:baseline;gap:3px;min-width:74px}
+.tnum span{font-family:var(--mono);font-size:38px;font-weight:800;line-height:1.05;color:currentColor}
+.tnum small{font-size:12px;color:var(--muted)}
+.tbar-wrap{flex:1;min-width:0}
+.tstate{font-size:13px;color:var(--text);font-weight:700;margin-bottom:5px}
+.tbar{height:10px;border-radius:99px;background:var(--line);overflow:hidden}
+.tfill{height:100%;width:100%;background:currentColor;border-radius:99px;transition:width .1s linear}
+.timer.warn{color:var(--amber)}
+.timer.danger,.timer.done{color:var(--ti)}
+.timer.danger .tnum span{animation:beat 1s infinite}
+@keyframes beat{0%,100%{transform:scale(1)}15%{transform:scale(1.12)}}
+
+/* הכרטיס – גודל הטקסט מותאם אוטומטית (‎--k) כך שהכול תמיד נכנס */
+.card{
+  --k:1;
+  grid-area:card;position:relative;min-height:0;display:flex;flex-direction:column;
+  padding:14px 14px 12px;border-radius:20px;border:1px solid var(--line-2);overflow:hidden;
+  background:
+    linear-gradient(rgba(20,22,26,.035) 1px, transparent 1px) 0 0/10% 12.5%,
+    linear-gradient(90deg, rgba(20,22,26,.035) 1px, transparent 1px) 0 0/10% 12.5%,
+    #fff;
+  box-shadow:0 8px 24px -14px rgba(20,22,26,.25);
+}
+.card::before{content:"";position:absolute;top:0;left:0;right:0;height:5px;background:var(--tc)}
+.card-head{flex:none;display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted);line-height:1.3}
+.ctag{color:var(--tc);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ccount{font-family:var(--mono);flex:none}
+.ccount.hot{font-family:var(--sans);font-weight:800;color:var(--ti)}
+.card-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.card-inner{margin-block:auto;width:100%;display:flex;flex-direction:column;align-items:center;text-align:center;padding:4px 0}
+
+.word{font-size:calc(var(--k) * clamp(32px,13vw,62px));font-weight:900;line-height:1.1;max-width:100%;overflow-wrap:normal;word-break:normal;unicode-bidi:plaintext}
+.word.long{font-size:calc(var(--k) * clamp(28px,11vw,54px))}
+.word.xlong{font-size:calc(var(--k) * clamp(26px,9.5vw,46px))}
+.sub{margin-top:calc(var(--k) * 6px);font-size:calc(var(--k) * clamp(15px,4.8vw,22px));color:var(--muted);font-weight:600;max-width:100%;unicode-bidi:plaintext}
+
+/* המילים האסורות */
+.forbid-box{margin-top:calc(var(--k) * 20px);width:100%;background:#fdeeee;border:1px solid #f4caca;border-radius:14px;overflow:hidden}
+.forbid-title{background:var(--ti);color:#fff;font-size:13px;font-weight:800;padding:5px 10px}
+.forbidden{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:10px}
+.tag{font-size:calc(var(--k) * clamp(17px,5.6vw,24px));font-weight:800;line-height:1.25;color:#7a0000;background:#fff;border:1px solid #f0bcbc;padding:calc(var(--k) * 7px) 14px;border-radius:10px;max-width:100%;unicode-bidi:plaintext}
+
+.overlay{position:absolute;inset:0;display:none;flex-direction:column;gap:8px;align-items:center;justify-content:center;background:rgba(255,255,255,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);font-size:30px;font-weight:900;color:var(--text);z-index:2}
+.overlay small{font-size:15px;color:var(--muted);font-weight:500}
+.card.paused .overlay{display:flex}
+
+.state-kicker{color:var(--muted);font-size:calc(var(--k) * 17px);margin-bottom:6px}
+.state-title{font-size:calc(var(--k) * clamp(28px,9.5vw,46px));font-weight:900;line-height:1.15;max-width:100%}
+.state-hint{margin-top:calc(var(--k) * 12px);font-size:calc(var(--k) * 16px);color:var(--muted);line-height:1.45}
+.state-hint b{color:var(--text)}
+.big-icon{font-size:calc(var(--k) * 50px);line-height:1.1}
+.summary{margin-top:calc(var(--k) * 14px);display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.pill{font-size:calc(var(--k) * 17px);padding:6px 14px;border-radius:12px;background:var(--panel-2);border:1px solid var(--line)}
+.pill b{font-family:var(--mono);font-size:1.35em;margin-inline-end:6px}
+.g{color:var(--green)} .r{color:var(--ti)} .a{color:var(--amber)}
+.dur{margin-top:calc(var(--k) * 18px);display:flex;align-items:center;gap:12px;font-size:15px;color:var(--muted)}
+.dur .stepper button{width:44px;height:40px}
+.dur .stepper output{min-width:56px;font-size:20px}
+
+/* קלפי הפתעה */
+.card.special{box-shadow:0 0 0 3px #ffb020,0 8px 24px -14px rgba(20,22,26,.25)}
+.card.special::before{background:#ffb020}
+.sp-kicker{font-size:calc(var(--k) * 18px);font-weight:900;color:#b86a00;margin-bottom:2px}
+.sp-emoji{font-size:calc(var(--k) * 72px);line-height:1.15;animation:spop .6s ease both}
+@keyframes spop{0%{transform:scale(.2) rotate(-25deg);opacity:0}60%{transform:scale(1.15) rotate(6deg);opacity:1}100%{transform:none}}
+.sp-x2{margin-top:calc(var(--k) * 12px);background:#fff4dc;color:#6b3d00;border:1px solid #ffd58a;font-weight:800;font-size:calc(var(--k) * 16px);padding:6px 14px;border-radius:99px}
+.sp-go{margin-top:calc(var(--k) * 16px);border:0;border-radius:14px;background:#ffb020;color:#2b1a00;font-size:calc(var(--k) * 22px);font-weight:900;padding:calc(var(--k) * 12px) 40px}
+.sp-banner{display:inline-flex;align-items:center;gap:6px;background:#ffb020;color:#2b1a00;font-weight:900;font-size:calc(var(--k) * 16px);padding:5px 14px;border-radius:99px;margin-bottom:calc(var(--k) * 12px);max-width:100%;white-space:nowrap}
+
+/* ספירה 3-2-1 */
+.count-num{font-family:var(--mono);font-weight:900;font-size:calc(var(--k) * clamp(110px,40vw,190px));line-height:1;color:var(--tc);animation:cpop .85s ease both}
+@keyframes cpop{0%{transform:scale(1.7);opacity:0}25%{transform:scale(1);opacity:1}100%{transform:scale(.9);opacity:.8}}
+
+.card.flash-ok{animation:fok .5s ease}
+.card.flash-no{animation:fno .4s ease}
+.card.flash-ok .word,.card.flash-no .word{animation:rise .28s ease}
+@keyframes fok{0%{box-shadow:0 0 0 4px var(--green),0 0 34px rgba(23,143,76,.45)}}
+@keyframes fno{0%{box-shadow:0 0 0 4px var(--ti),0 0 34px rgba(204,0,0,.4);transform:translateX(8px)}25%{transform:translateX(-6px)}50%{transform:translateX(3px)}100%{transform:none}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}}
+
+/* כפתורי ✓ / ✗ */
+.actions{grid-area:actions;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn-big{height:clamp(56px,10vh,84px);border:0;border-radius:18px;font-size:clamp(21px,6.2vw,28px);font-weight:900;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .08s,opacity .2s;white-space:nowrap;color:#fff}
+.btn-big:active:not(:disabled){transform:scale(.97)}
+.btn-big .ic{font-size:1.35em;line-height:1}
+.ok{background:var(--green);box-shadow:0 10px 22px -12px rgba(23,143,76,.8)}
+.no{background:var(--ti);box-shadow:0 10px 22px -12px rgba(204,0,0,.8)}
+.btn-big:disabled{opacity:.25;box-shadow:none}
+.badge{font-family:var(--mono);font-size:.6em;font-weight:800;background:rgba(0,0,0,.22);padding:.18em .55em;border-radius:99px;min-width:1.7em;text-align:center}
+.badge.pen{background:#fff;color:var(--ti)}
+.badge[hidden]{display:none}
+
+/* שורת שליטה */
+.ctrls{grid-area:ctrls;display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:8px}
+.ctl{height:clamp(44px,7vh,54px);border-radius:14px;border:1px solid var(--line-2);background:var(--panel);font-size:15px;font-weight:800;white-space:nowrap}
+.ctl:disabled{opacity:.4}
+.ctl.main-ctl{background:var(--text);border:0;color:#fff;font-size:18px}
+.ctl.main-ctl.pausing{background:#e3e6ea;color:var(--text)}
+.ctl.main-ctl:disabled{background:var(--line);color:var(--muted);opacity:1}
+.ctl.pulse{border-color:var(--ti);color:var(--ti);animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(204,0,0,.35)}50%{box-shadow:0 0 0 7px rgba(204,0,0,0)}}
+
+/* אפקטים: קונפטי, הודעת רצף, הבהוב סיום */
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:40}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top, 0px) + 132px);z-index:45;pointer-events:none;background:var(--text);color:#fff;font-weight:900;font-size:clamp(20px,6.4vw,30px);padding:10px 22px;box-shadow:0 10px 24px -10px rgba(0,0,0,.4);border-radius:999px;opacity:0;white-space:nowrap;transform:translate(-50%,-50%)}
+#toast.hot{background:var(--ti)}
+#toast.go{animation:toastA 1.25s ease}
+@keyframes toastA{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}25%{transform:translate(-50%,-50%) scale(1)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-75%) scale(1)}}
+#flash{position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle,rgba(204,0,0,0) 35%,rgba(204,0,0,.45));opacity:0;z-index:50}
+#flash.go{animation:flashA 1.5s ease}
+@keyframes flashA{0%,30%,60%{opacity:1}15%,45%{opacity:.2}100%{opacity:0}}
+
+/* טלפון לרוחב */
+@media (orientation:landscape) and (max-height:540px){
+  #game.on{
+    display:grid;max-width:none;gap:8px;
+    grid-template-columns:minmax(0,1fr) minmax(290px,42%);
+    grid-template-rows:auto auto auto minmax(0,1fr) auto;
+    grid-template-areas:"card bar" "card score" "card timer" "card actions" "card ctrls";
+  }
+  .actions{align-self:end}
+  .title-sm b{font-size:14px}
+  .chip-btn{font-size:12px;padding:0 9px}
+  .chip-btn.icon{width:32px}
+  .ctl{font-size:13px;height:min(46px,13vh)}
+  .ctl.main-ctl{font-size:15px}
+  .btn-big{height:min(64px,18vh);font-size:21px}
+  .tnum span{font-size:30px}
+  .score{font-size:24px}
+  .word{font-size:calc(var(--k) * clamp(28px,15vh,56px))}
+  .word.long{font-size:calc(var(--k) * clamp(26px,13vh,50px))}
+  .word.xlong{font-size:calc(var(--k) * clamp(24px,11vh,44px))}
+  .sub{font-size:calc(var(--k) * clamp(14px,6vh,22px))}
+  .tag{font-size:calc(var(--k) * clamp(15px,6.5vh,24px))}
+  .count-num{font-size:calc(var(--k) * clamp(80px,45vh,170px))}
+  #toast{left:max(155px,21%);top:calc(env(safe-area-inset-top, 0px) + 150px);font-size:20px}
+}
+@media (max-width:350px){.title-sm b{font-size:14px}.chip-btn{padding:0 9px;font-size:12px}.chip-btn.icon{width:32px}.btn-big{font-size:20px;gap:6px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- כמה טלפונים ---------- */
+.hidden{display:none!important}
+#menu{position:fixed;top:calc(env(safe-area-inset-top, 0px) + 50px);left:calc(10px + env(safe-area-inset-left, 0px));z-index:60;background:#fff;border:1px solid var(--line-2);border-radius:16px;box-shadow:0 16px 40px -12px rgba(0,0,0,.3);padding:6px;min-width:220px;display:none}
+#menu.open{display:block}
+#menu button{display:block;width:100%;text-align:right;background:none;border:0;padding:12px 14px;font-size:16px;font-weight:700;border-radius:10px;color:var(--text)}
+#menu button:active{background:var(--panel-2)}
+#menu .danger{color:var(--ti)}
+.tstate{display:flex;justify-content:space-between;gap:8px}
+.trole{font-weight:800;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tppl{font-size:11px;color:var(--muted);font-weight:600;line-height:1.1}
+.buzz-btn{height:clamp(64px,12vh,96px);border:0;border-radius:20px;background:var(--ti);color:#fff;font-size:clamp(30px,9vw,42px);font-weight:900;box-shadow:0 12px 28px -12px rgba(204,0,0,.85);transition:transform .08s,opacity .2s}
+.buzz-btn:active:not(:disabled){transform:scale(.97)}
+.buzz-btn:disabled{opacity:.25;box-shadow:none}
+.actions.one,.ctrls.one{grid-template-columns:1fr}
+.ctrls.one .ctl{height:clamp(54px,9vh,68px);font-size:20px}
+.guess-emoji{font-size:calc(var(--k) * 64px);line-height:1.1}
+.join-teams{display:grid;gap:10px;margin:6px 0 16px}
+.join-team{display:flex;align-items:center;justify-content:space-between;padding:18px;border-radius:16px;background:#fff;border:2px solid var(--c);font-size:21px;font-weight:800;color:var(--text)}
+.join-team .js{font-family:var(--mono);color:var(--c)}
+.link-btn{background:none;border:0;color:var(--muted);text-decoration:underline;font-size:15px;padding:10px;width:100%}
+.secondary-btn{width:100%;margin-top:10px;padding:15px;border-radius:16px;border:1px solid var(--line-2);background:#fff;font-size:18px;font-weight:800;color:var(--text)}
+.status-line{font-size:13px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5}
+@media (max-height:600px) and (orientation:portrait){
+  .tppl{display:none}
+  .team{padding:5px 8px 6px}
+}
+@media (orientation:landscape) and (max-height:540px){
+  .buzz-btn{height:min(64px,18vh);font-size:26px}
+  .ctrls.one .ctl{height:min(52px,15vh);font-size:17px}
+}
+</style>
+</head>
+<body>
+
+<!-- ======== מסך פתיחה / הצטרפות ======== -->
+<section id="setup">
+  <div class="setup-box">
+    <div class="brand-line"><span class="brand-mark"></span>Texas Instruments Israel</div>
+    <h1>טאבו <span class="team-line">קבוצת System</span></h1>
+
+    <div id="joinBox" class="hidden">
+      <p class="lead">יש משחק פעיל. באיזו קבוצה אתם?</p>
+      <div class="join-teams" id="joinTeams"></div>
+      <button class="link-btn" data-act="show-setup">פתיחת משחק חדש במקום</button>
+    </div>
+
+    <div id="setupBox">
+      <p class="lead" id="leadText">מסבירים מושג בלי המילים האסורות.</p>
+
+      <div class="field">
+        <label>מספר קבוצות</label>
+        <div class="seg" id="segN">
+          <button data-n="2" class="on">2 קבוצות</button>
+          <button data-n="3">3 קבוצות</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>שמות הקבוצות</label>
+        <div class="names" id="nameInputs"></div>
+      </div>
+
+      <div class="two">
+        <div class="field">
+          <label>שניות לתור</label>
+          <div class="stepper">
+            <button id="durPlus" aria-label="הוסף 5 שניות">+</button>
+            <output id="durOut">40</output>
+            <button id="durMinus" aria-label="הפחת 5 שניות">−</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>דילוגים לתור</label>
+          <div class="stepper">
+            <button id="skipPlus" aria-label="הוסף דילוג">+</button>
+            <output id="skipOut">3</output>
+            <button id="skipMinus" aria-label="הפחת דילוג">−</button>
+          </div>
+        </div>
+      </div>
+      <p class="field-note" id="skipNote"></p>
+
+      <div class="field" style="margin-top:16px">
+        <label>קלפי הפתעה</label>
+        <div class="seg" id="segSp">
+          <button data-sp="1" class="on">פעיל</button>
+          <button data-sp="0">כבוי</button>
+        </div>
+        <p class="field-note">אחרי כל 3 ניחושים נכונים מגיע אתגר: פנטומימה, לחישה, שירה ועוד.</p>
+      </div>
+
+      <button class="primary-btn hidden" id="createMultiBtn" style="margin-top:18px">צור משחק לכל הטלפונים</button>
+      <button class="primary-btn" id="startSoloBtn" style="margin-top:18px">התחל משחק</button>
+      <button class="link-btn hidden" id="backToJoin" data-act="show-join">חזרה למשחק הפעיל</button>
+      <p class="status-line" id="statusLine"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ======== מסך משחק ======== -->
+<section id="game">
+  <header class="bar">
+    <div class="title-sm"><small dir="ltr">Texas Instruments Israel</small><b>טאבו קבוצת System</b></div>
+    <div class="bar-actions">
+      <button class="chip-btn icon" id="muteBtn" data-act="mute" aria-label="השתקה">🔊</button>
+      <button class="chip-btn icon" id="menuBtn" data-act="menu" aria-label="תפריט">⋯</button>
+    </div>
+  </header>
+
+  <div class="scoreboard" id="scoreboard"></div>
+
+  <div class="timer" id="timerPanel">
+    <div class="tnum"><span id="tNum">40</span><small>שנ׳</small></div>
+    <div class="tbar-wrap">
+      <div class="tstate"><span id="timerState">מוכן</span><span class="trole" id="roleTag"></span></div>
+      <div class="tbar"><div class="tfill" id="tFill"></div></div>
+    </div>
+  </div>
+
+  <div class="card" id="card"></div>
+  <div class="actions" id="actions"></div>
+  <div class="ctrls" id="ctrls"></div>
+</section>
+
+<div id="menu" role="menu">
+  <button data-act="m-reset">↺ איפוס התור</button>
+  <button data-act="m-next">העבר תור לקבוצה הבאה</button>
+  <button data-act="m-team" id="mTeam">החלפת קבוצה</button>
+  <button data-act="m-new" id="mNew" class="danger">משחק חדש</button>
+</div>
+
+<canvas id="fx" aria-hidden="true"></canvas>
+<div id="toast" aria-live="polite"></div>
+<div id="flash"></div>
+
+<script>
+/* ================= מאגר הכרטיסים ================= */
+const cards = [
+  { word: "מחולל אותות (Signal Generator)", forbidden: ["תדר", "RF", "עוצמה"] },
+  { word: "אנלייזר (Spectrum Analyzer)", forbidden: ["מסך", "תדר", "מדידה"] },
+  { word: "הלחמה של יוליה", forbidden: ["מעבדה", "רכיב", "מלחם / כבל"] },
+  { word: "קליברציה", forbidden: ["דיוק", "מכשיר", "לכוון"] },
+  { word: "ספרת רעש (Noise Figure)", forbidden: ["dB", "אות", "מקלט"] },
+  { word: "תיאום עקבות (Impedance Matching)", forbidden: ["50 אום", "קואקס", "החזרות"] },
+  { word: "בורד גולדן (Golden Board)", forbidden: ["ייחוס", "תקין", "עובד"] },
+  { word: "הרצת רגרסיה", forbidden: ["לילה", "אוטומציה", "נפלה / אדומה"] },
+  { word: "Datasheet / דף נתונים", forbidden: ["מסמך", "מפרט", "לקוח"] },
+  { word: "\"לא משתחזר\"", forbidden: ["באג", "תקלה", "עובד אצלי"] },
+  { word: "PG (Tapeout)", forbidden: ["סיליקון", "ייצור", "מפעל"] },
+  { word: "LX (CC3301)", forbidden: ["צ'יפ", "רכיב", "דור"] },
+  { word: "MX (CC3551E)", forbidden: ["צ'יפ", "רכיב", "חדש"] },
+  { word: "קומפניא", forbidden: ["מעבד", "חיבור", "תקשורת"] },
+  { word: "ART", forbidden: ["פייתון", "אוטומציה", "כלי"] },
+  { word: "Townhall", forbidden: ["שיחה", "הנהלה", "מצגת"] },
+  { word: "מעלית C", forbidden: ["קומה 12", "חניון מינוס 1", "קומות"] },
+  { word: "גלבוע", forbidden: ["ישיבות", "חדר", "דיון"] },
+  { word: "גבינה צפתית", forbidden: ["מלוחה", "מקרר", "מטבח / שבועות"] },
+  { word: "פינג פונג", forbidden: ["שולחן", "כדור", "מטקה"] },
+  { word: "VPN (איטי)", forbidden: ["חיבור", "עבודה מהבית", "תקוע / אינטרנט"] },
+  { word: "CSI", forbidden: ["ניר", "ערוץ / Channel", "אות"] },
+  { word: "VNC", forbidden: ["התחברות מרחוק", "מסך", "לינוקס / מחשב"] },
+  { word: "LitePoint", forbidden: ["מכשיר", "מדידה", "מעבדה"] },
+  { word: "Lua", forbidden: ["סיסטם", "סקריפט", "שפה"] },
+  { word: "Wi-Fi 7", forbidden: ["תקן", "802.11", "אלחוטי"] },
+  { word: "EVM", forbidden: ["אות", "איכות", "dB"] },
+  { word: "RF Chamber", forbidden: ["צ'מבר", "חום", "קור / טמפרטורה"] },
+  { word: "דאלאס (Dallas)", forbidden: ["הנהלה", "ארה\"ב", "מטה / טיסה"] },
+  { word: "Pigtail", forbidden: ["כיול", "כבל", "RF"] },
+  { word: "Jira Ticket", forbidden: ["באג", "משימה", "ספרינט"] },
+  { word: "שיחת 1:1", forbidden: ["מנהל", "חדר", "שכר / משוב"] },
+  { word: "Launchpad", forbidden: ["בורד", "apps", "ערכה / TI"] },
+  { word: "VNA (Vector Network Analyzer)", forbidden: ["מכשיר", "S-parameters / S11", "כיול"] },
+  { word: "מנחת (Attenuator)", forbidden: ["הנחתה", "dB", "כבל"] },
+  { word: "סניפר / לוגר", forbidden: ["פקטים", "לכידה", "תקשורת / קוד"] },
+  { word: "Phase Noise", forbidden: ["רעש", "תדר", "אות"] },
+  { word: "LNA", forbidden: ["מגבר", "קליטה", "רעש"] },
+  { word: "LO Leakage", forbidden: ["תדר", "זליגה", "RF"] },
+  { word: "Rx Suspend", forbidden: ["שי", "חיסכון", "מצב / תקשורת"] }
+];
+
+/* ================= קלפי הפתעה ================= */
+const CHALLENGES = [
+  { e: '🎭', t: 'פנטומימה', d: 'בלי מילים בכלל. רק תנועות.' },
+  { e: '📢', t: 'בצעקות', d: 'כל ההסבר בצעקות.' },
+  { e: '🤫', t: 'בלחישה', d: 'כל ההסבר בלחישה.' },
+  { e: '😌', t: 'עיניים עצומות', d: 'קוראים את הכרטיס, עוצמים עיניים ומסבירים.' },
+  { e: '🎩', t: 'מבטא בריטי', d: 'מסבירים במבטא בריטי.' },
+  { e: '🥖', t: 'מבטא צרפתי', d: 'מסבירים במבטא צרפתי.' },
+  { e: '🎵', t: 'בשירה', d: 'שרים את ההסבר.' },
+  { e: '3️⃣', t: 'שלוש מילים בלבד', d: 'מקסימום 3 מילים בכל ההסבר.' },
+  { e: '🙌', t: 'בלי ידיים', d: 'ידיים מאחורי הגב.' },
+  { e: '🇬🇧', t: 'רק באנגלית', d: 'מסבירים רק באנגלית.' },
+  { e: '🐢', t: 'לאט לאט', d: 'מדברים לאט מאוד.' }
+];
+
+/* ================= עזרים ================= */
+const TEAM_COLORS = ['#cc0000', '#2b2f36', '#1f6fd1'];
+const TEAM_RGB    = ['204,0,0', '43,47,54', '31,111,209'];
+const DEFAULT_NAMES = ['קבוצה א׳', 'קבוצה ב׳', 'קבוצה ג׳'];
+const SKIP_UNLIMITED = 11;
+const COUNT_MS = 850;
+// כתובת מסד הנתונים ב-Firebase (Realtime Database)
+const FIREBASE_URL = (window.TABOO_FB || 'https://taboo-system-default-rtdb.europe-west1.firebasedatabase.app').replace(/\/+$/, '');
+const GAME_PATH = 'games/main';
+let CLOCK = 0;                                  // הפרש בין השעון של הטלפון לשעון השרת
+const now = () => Date.now() + CLOCK;
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clampDur = v => Math.min(180, Math.max(10, v));
+const clampSkip = v => Math.min(SKIP_UNLIMITED, Math.max(0, v));
+const clone = o => JSON.parse(JSON.stringify(o));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const vibrate = p => { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} };
+const reducedMotion = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const LS = {
+  get(k){ try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v){ try { localStorage.setItem(k, v); } catch (e) {} }
+};
+function shuffle(a){
+  for (let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function splitWord(w){
+  const m = w.match(/^(.+?)\s*\(([^()]+)\)\s*$/);
+  return m ? { main: m[1], sub: m[2] } : { main: w, sub: '' };
+}
+function deviceId(){
+  let id = LS.get('taboo-device');
+  if (!id){ id = 'd-' + Math.random().toString(36).slice(2, 12); LS.set('taboo-device', id); }
+  return id;
+}
+
+/* ================= מצב ================= */
+// F – טופס ההגדרות המקומי. G – מצב המשחק (משותף לכל הטלפונים במצב multi).
+const F = { n: 2, names: DEFAULT_NAMES.slice(), duration: 40, skipLimit: 3, surprises: true };
+let G = null;
+let MODE = 'solo';          // 'solo' | 'multi'
+let screen = 'setup';       // 'setup' | 'join' | 'game'
+const ME = { id: null, team: null };
+let GSTREAM = null, PSTREAM = null, presenceData = {};
+let MULTI_OK = false, canWrite = true, connecting = true;
+let remoteG = null, autoRouted = false;
+let peers = [];
+let editing = -1;
+
+/* ================= סאונד – Web Audio API ================= */
+const SFX = (() => {
+  let ctx = null, master = null, muted = false;
+  function ac(){
+    if (!ctx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -12; comp.ratio.value = 4;
+      master = ctx.createGain(); master.gain.value = 0.95;
+      master.connect(comp); comp.connect(ctx.destination);
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+  function tone(freq, dur, type = 'sine', vol = 0.2, when = 0, slideTo){
+    if (muted) return;
+    const c = ac(); if (!c) return;
+    const t = c.currentTime + 0.01 + when;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+    g.gain.setValueAtTime(vol, t + Math.max(0.015, dur * 0.65));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(master);
+    o.start(t); o.stop(t + dur + 0.03);
+  }
+  return {
+    unlock(){
+      const c = ac();
+      if (c){ const o = c.createOscillator(), g = c.createGain(); g.gain.value = 0.0001; o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.02); }
+    },
+    isMuted(){ return muted; },
+    toggle(){ muted = !muted; return muted; },
+    count(){ tone(660, .14, 'square', .2); },
+    go(){ tone(880, .1, 'square', .24); tone(1320, .22, 'square', .24, .1); },
+    ok(){ tone(660, .08, 'triangle', .34); tone(990, .17, 'triangle', .34, .07); },
+    streak(){ [784, 988, 1175, 1568].forEach((f, i) => tone(f, .12, 'triangle', .3, i * .07)); },
+    no(){ tone(330, .2, 'sawtooth', .18, 0, 150); },
+    penalty(){ tone(200, .28, 'square', .2, 0, 110); },
+    special(){ [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, .1, 'triangle', .28, i * .06)); tone(1568, .32, 'sine', .22, .32); },
+    buzz(){ [[0, .16], [.2, .16], [.4, .45]].forEach(([s, d]) => { tone(880, d, 'square', .3, s, 440); tone(587, d, 'sawtooth', .22, s, 290); }); },
+    tick(n){ tone(n <= 3 ? 1320 : 1000, .07, 'square', .15); },
+    buzzer(){
+      [[0, .3], [.4, .3], [.8, 1.15]].forEach(([s, d]) => {
+        [[220, 'square', .32], [233, 'sawtooth', .26], [110, 'square', .22], [440, 'sawtooth', .1]]
+          .forEach(([f, ty, v]) => tone(f, d, ty, v, s));
+      });
+    }
+  };
+})();
+
+/* ================= קונפטי ================= */
+const FX = (() => {
+  const cv = $('#fx'), cx = cv.getContext('2d');
+  const COLORS = ['#cc0000', '#14161a', '#1f6fd1', '#178f4c', '#ffb020', '#ff5a5a'];
+  let parts = [], raf = 0, dpr = 1;
+  function size(){ dpr = Math.min(2, window.devicePixelRatio || 1); cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; }
+  size(); window.addEventListener('resize', size);
+  function loop(){
+    cx.clearRect(0, 0, cv.width, cv.height);
+    parts = parts.filter(p => p.life > 0 && p.y < innerHeight + 40);
+    for (const p of parts){
+      p.vy += 0.32; p.vx *= 0.985; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life--;
+      cx.save();
+      cx.globalAlpha = Math.min(1, p.life / 25);
+      cx.translate(p.x * dpr, p.y * dpr); cx.rotate(p.rot);
+      cx.fillStyle = p.c;
+      cx.fillRect(-p.w * dpr / 2, -p.h * dpr / 2, p.w * dpr, p.h * dpr * Math.abs(Math.cos(p.rot * 2)) + dpr);
+      cx.restore();
+    }
+    raf = parts.length ? requestAnimationFrame(loop) : 0;
+    if (!parts.length) cx.clearRect(0, 0, cv.width, cv.height);
+  }
+  return {
+    burst(x, y, n = 40, power = 1){
+      if (reducedMotion()) return;
+      for (let i = 0; i < n; i++){
+        const a = -Math.PI / 2 + (Math.random() - .5) * Math.PI * 1.1;
+        const v = (6 + Math.random() * 8) * power;
+        parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, w: 6 + Math.random() * 6, h: 8 + Math.random() * 8,
+          rot: Math.random() * 6, vr: (Math.random() - .5) * .4, c: COLORS[i % COLORS.length], life: 70 + Math.random() * 40 });
+      }
+      if (!raf) raf = requestAnimationFrame(loop);
+    },
+    fromCard(n, power){
+      const r = $('#card').getBoundingClientRect();
+      this.burst(r.left + r.width / 2, r.top + r.height * 0.4, n, power);
+    }
+  };
+})();
+
+function showToast(text, hot){
+  const t = $('#toast');
+  t.textContent = text;
+  t.classList.toggle('hot', !!hot);
+  t.classList.remove('go'); void t.offsetWidth; t.classList.add('go');
+}
+function flashScreen(){
+  const f = $('#flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+}
+
+/* ================= מסך דלוק בזמן משחק ================= */
+let wakeLock = null;
+async function keepAwake(){
+  try {
+    if ('wakeLock' in navigator && !wakeLock){
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    }
+  } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && screen === 'game') keepAwake();
+});
+
+/* ================= חוקי המשחק ================= */
+function freshGame(){
+  const d = F.duration;
+  return {
+    v: 1, gid: 'g' + now().toString(36) + Math.random().toString(36).slice(2, 6), rev: 0,
+    teams: F.names.slice(0, F.n).map((nm, i) => ({ name: (nm || '').trim() || DEFAULT_NAMES[i], score: 0 })),
+    set: { duration: d, skipLimit: F.skipLimit, surprises: F.surprises },
+    active: 0, phase: 'ready', explainer: null,
+    goAt: 0, endAt: 0, remaining: d,
+    deck: shuffle([...Array(cards.length).keys()]), pos: 0, drawn: 0, card: null, lastCard: null,
+    untilSpecial: 2, special: null, lastChallenge: -1,
+    turn: { tc: 0, ts: 0, tp: 0, buzz: 0, streak: 0, best: 0 },
+    ev: { n: 0, t: '', streak: 0, team: 0 }
+  };
+}
+const effPhase = g => (g.phase === 'countdown' && now() >= g.goAt) ? 'running' : g.phase;
+function remOf(g){
+  return effPhase(g) === 'running' ? Math.max(0, (g.endAt - now()) / 1000) : g.remaining;
+}
+const skipsLeftOf = g => g.set.skipLimit >= SKIP_UNLIMITED ? Infinity : Math.max(0, g.set.skipLimit - g.turn.ts);
+function drawCard(g){
+  if (g.pos >= g.deck.length){
+    // החפיסה נגמרה – מערבבים מחדש וממשיכים (חזרות מותרות)
+    g.deck = shuffle([...Array(cards.length).keys()]); g.pos = 0;
+    if (g.deck[0] === g.lastCard) [g.deck[0], g.deck[1]] = [g.deck[1], g.deck[0]];
+  }
+  g.card = g.deck[g.pos++]; g.lastCard = g.card; g.drawn++;
+}
+function pickChallenge(g){
+  let i;
+  do { i = Math.floor(Math.random() * CHALLENGES.length); } while (i === g.lastChallenge && CHALLENGES.length > 1);
+  g.lastChallenge = i;
+  const c = CHALLENGES[i];
+  return { e: c.e, t: c.t, d: c.d };
+}
+function resetTurnFields(g){
+  g.phase = 'ready'; g.explainer = null; g.remaining = g.set.duration; g.goAt = 0; g.endAt = 0;
+  g.special = null; g.turn = { tc: 0, ts: 0, tp: 0, buzz: 0, streak: 0, best: 0 };
+}
+
+/* כל פעולה: מעתיקה את המצב, משנה, ושומרת (ובמצב multi – משדרת לכל הטלפונים) */
+function act(fn){
+  if (!G) return;
+  if (MODE === 'multi' && !canWrite){ showToast('אין לך הרשאה לשחק', true); return; }
+  const g = clone(G);
+  if (fn(g) === false) return;
+  commit(g);
+}
+const A = {
+  start(){ act(g => {
+    if (g.phase !== 'ready') return false;
+    resetTurnFields(g);
+    g.phase = 'countdown'; g.explainer = ME.id;
+    g.goAt = now() + 3 * COUNT_MS; g.endAt = g.goAt + g.remaining * 1000;
+    if (g.card == null) drawCard(g);
+  }); },
+  pause(){ act(g => { if (effPhase(g) !== 'running') return false; g.remaining = remOf(g); g.phase = 'paused'; }); },
+  resume(){ act(g => { if (g.phase !== 'paused') return false; g.phase = 'running'; g.endAt = now() + g.remaining * 1000; }); },
+  go(){ act(g => { if (g.phase !== 'reveal') return false; g.phase = 'running'; g.endAt = now() + g.remaining * 1000; }); },
+  answer(ok){ act(g => {
+    if (effPhase(g) !== 'running' || g.card == null) return false;
+    g.phase = 'running';
+    const t = g.turn, wasSp = !!g.special;
+    let type;
+    if (ok){
+      t.tc++; t.streak++; t.best = Math.max(t.best, t.streak);
+      g.teams[g.active].score += wasSp ? 2 : 1;
+      type = wasSp ? 'ok2' : (t.streak >= 3 ? 'streak' : 'ok');
+    } else {
+      t.streak = 0; t.ts++;
+      if (t.ts > (g.set.skipLimit >= SKIP_UNLIMITED ? Infinity : g.set.skipLimit)){
+        // נגמרו הדילוגים החינמיים – דילוג נוסף עולה נקודה
+        t.tp++; g.teams[g.active].score = Math.max(0, g.teams[g.active].score - 1); type = 'pen';
+      } else type = 'skip';
+    }
+    g.ev = { n: g.ev.n + 1, t: type, streak: t.streak, team: g.active };
+    g.special = null;
+    drawCard(g);
+    // קלף הפתעה: אחרי כל 3 ניחושים נכונים. הסטופר עוצר עד שהמסביר לוחץ "יאללה!"
+    if (ok && g.set.surprises && --g.untilSpecial <= 0){
+      g.untilSpecial = 3;
+      g.special = pickChallenge(g);
+      g.remaining = remOf(g);
+      g.phase = 'reveal';
+    }
+  }); },
+  buzz(){ act(g => {
+    if (effPhase(g) !== 'running' || g.card == null) return false;
+    g.phase = 'running';
+    g.turn.buzz++; g.turn.streak = 0;
+    g.ev = { n: g.ev.n + 1, t: 'buzz', streak: 0, team: g.active };
+    g.special = null;
+    drawCard(g);
+  }); },
+  timeUp(){ act(g => {
+    if (effPhase(g) !== 'running' || remOf(g) > 0) return false;
+    g.phase = 'timeup'; g.remaining = 0; g.card = null; g.special = null;
+  }); },
+  reset(){ act(g => { resetTurnFields(g); }); },
+  next(){ act(g => { g.card = null; g.active = (g.active + 1) % g.teams.length; resetTurnFields(g); }); },
+  adj(i, d){ act(g => { g.teams[i].score = Math.max(0, g.teams[i].score + d); }); },
+  dur(d){ act(g => { if (g.phase !== 'ready') return false; g.set.duration = clampDur(g.set.duration + d); g.remaining = g.set.duration; }); }
+};
+
+/* ================= סנכרון בין טלפונים ================= */
+let writing = false, pendingWrite = null;
+const strip = o => JSON.parse(JSON.stringify(o, (k, v) => v === null ? undefined : v));
+const stable = o => JSON.stringify(o, (k, v) => (v && typeof v === 'object' && !Array.isArray(v))
+  ? Object.keys(v).sort().reduce((a, kk) => (a[kk] = v[kk], a), {}) : v);
+function commit(g){
+  g.rev = (G ? G.rev : 0) + 1;
+  g = strip(g);
+  const prev = G;
+  G = g;
+  if (MODE === 'multi'){ remoteG = g; queueWrite(g); }
+  onState(prev, g);
+}
+async function queueWrite(g){
+  pendingWrite = g;
+  if (writing) return;
+  writing = true;
+  while (pendingWrite){
+    const w = pendingWrite; pendingWrite = null;
+    for (let attempt = 0; attempt < 2; attempt++){
+      try {
+        const r = await fetch(`${FIREBASE_URL}/${GAME_PATH}.json`, { method: 'PUT', body: JSON.stringify(w) });
+        if (!r.ok) throw { code: (r.status === 401 || r.status === 403) ? 'denied' : 'unavailable' };
+        break;
+      } catch (e){
+        const code = e && e.code;
+        if (code !== 'denied' && attempt === 0){ await sleep(300 + Math.random() * 400); continue; }
+        showToast(code === 'denied' ? 'השרת חוסם כתיבה' : 'החיבור נתקע, נסו שוב', true);
+        break;
+      }
+    }
+  }
+  writing = false;
+}
+function applyRemote(data, pending){
+  remoteG = data || null;
+  if (MODE !== 'multi'){ routeFirstSnapshot(); renderSetupScreen(); return; }
+  if (!data){ renderSetupScreen(); return; }
+  if (G && data.gid === G.gid){
+    const newer = data.rev > G.rev || (data.rev === G.rev && stable(data) !== stable(G));
+    if (!newer) return;
+    const prev = G; G = clone(data); onState(prev, G);
+  } else {
+    // משחק חדש נפתח מטלפון אחר
+    G = clone(data);
+    ME.team = storedTeam(G.gid);
+    if (ME.team == null || ME.team >= G.teams.length){ ME.team = null; if (screen === 'game') showToast('נפתח משחק חדש. בחרו קבוצה'); showJoin(); }
+    else { announce(); if (screen !== 'game') showGame(); renderAll(); }
+  }
+}
+function storedTeam(gid){ const v = LS.get('taboo-team-' + gid); return v == null ? null : +v; }
+function announce(){
+  if (MODE !== 'multi' || !G || ME.team == null || !MULTI_OK) return;
+  fetch(`${FIREBASE_URL}/presence/${ME.id}.json`, { method: 'PUT',
+    body: JSON.stringify({ gid: G.gid, team: ME.team, t: { '.sv': 'timestamp' } }) }).catch(() => {});
+}
+setInterval(() => { if (screen === 'game') announce(); }, 20000);
+function routeFirstSnapshot(){
+  if (autoRouted || screen !== 'setup' || !remoteG) return;
+  autoRouted = true;
+  const t = storedTeam(remoteG.gid);
+  if (t != null && t < remoteG.teams.length){ MODE = 'multi'; G = clone(remoteG); ME.team = t; announce(); showGame(); renderAll(); }
+  else showJoin();
+}
+
+/* ---- זרם עדכונים חי מ-Firebase (EventSource) ---- */
+function applyAt(root, path, val, patch){
+  const parts = path.split('/').filter(Boolean);
+  if (!parts.length) return patch ? Object.assign({}, root || {}, val) : val;
+  root = (root && typeof root === 'object') ? clone(root) : {};
+  let o = root;
+  for (let i = 0; i < parts.length - 1; i++){
+    if (!o[parts[i]] || typeof o[parts[i]] !== 'object') o[parts[i]] = {};
+    o = o[parts[i]];
+  }
+  const last = parts[parts.length - 1];
+  if (patch) o[last] = Object.assign({}, o[last] || {}, val);
+  else if (val === null) delete o[last];
+  else o[last] = val;
+  return root;
+}
+function openStream(path, onData){
+  let es = null, data = null;
+  const connect = () => {
+    es = new EventSource(`${FIREBASE_URL}/${path}.json`);
+    const handle = (e, patch) => {
+      let m; try { m = JSON.parse(e.data); } catch (_) { return; }
+      if (!m || typeof m.path !== 'string') return;
+      data = applyAt(data, m.path, m.data, patch);
+      onData(data);
+    };
+    es.addEventListener('put', e => handle(e, false));
+    es.addEventListener('patch', e => handle(e, true));
+    es.addEventListener('cancel', () => es.close());
+    es.addEventListener('auth_revoked', () => es.close());
+  };
+  connect();
+  return { ensure(){ if (!es || es.readyState === 2) connect(); } };
+}
+async function getJSON(path, ms = 8000){
+  const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), ms);
+  try {
+    const r = await fetch(`${FIREBASE_URL}/${path}.json`, { signal: ctl.signal });
+    if (!r.ok) throw new Error('http ' + r.status);
+    return await r.json();
+  } finally { clearTimeout(tm); }
+}
+async function syncClock(){
+  try {
+    const t0 = Date.now();
+    const r = await fetch(`${FIREBASE_URL}/clock/${ME.id}.json`, { method: 'PUT', body: JSON.stringify({ '.sv': 'timestamp' }) });
+    const t1 = Date.now();
+    const server = await r.json();
+    if (typeof server === 'number') CLOCK = server - (t0 + t1) / 2;
+  } catch (e) {}
+}
+function refreshNow(){ if (MULTI_OK) getJSON(GAME_PATH).then(d => applyRemote(d, false)).catch(() => {}); }
+
+async function boot(){
+  ME.id = deviceId();
+  renderSetupForm();
+  renderSetupScreen();
+  try {
+    const data = await getJSON(GAME_PATH);
+    MULTI_OK = true;
+    await syncClock();
+    connecting = false;
+    applyRemote(data, false);
+    GSTREAM = openStream(GAME_PATH, d => applyRemote(d, false));
+    PSTREAM = openStream('presence', d => { presenceData = d || {}; if (screen === 'game') renderScore(); });
+  } catch (e){
+    connecting = false; MULTI_OK = false;
+  }
+  renderSetupScreen();
+}
+// רשת ביטחון: אם הזרם החי נקטע (טלפון שנכנס לשינה וכו'), מושכים את המצב כל כמה שניות
+setInterval(() => { if (MULTI_OK && MODE === 'multi'){ GSTREAM && GSTREAM.ensure(); PSTREAM && PSTREAM.ensure(); refreshNow(); } }, 4000);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && MULTI_OK){ GSTREAM && GSTREAM.ensure(); PSTREAM && PSTREAM.ensure(); refreshNow(); announce(); }
+});
+
+/* ================= מסכים ================= */
+function showGame(){
+  screen = 'game';
+  $('#setup').classList.add('off'); $('#game').classList.add('on');
+  closeMenu(); window.scrollTo(0, 0);
+}
+function showSetupSection(){
+  $('#game').classList.remove('on'); $('#setup').classList.remove('off'); closeMenu();
+}
+function showJoin(){ screen = 'join'; showSetupSection(); renderSetupScreen(); }
+function showSetup(){ screen = 'setup'; showSetupSection(); renderSetupForm(); renderSetupScreen(); }
+
+function renderSkipSetting(){
+  const unlimited = F.skipLimit >= SKIP_UNLIMITED;
+  $('#skipOut').textContent = unlimited ? '∞' : F.skipLimit;
+  $('#skipNote').textContent = unlimited
+    ? 'אפשר לדלג בלי הגבלה.'
+    : F.skipLimit === 0
+      ? 'אין דילוגים חינם: כל דילוג מוריד נקודה.'
+      : `${F.skipLimit} דילוגים חינם בכל תור. כל דילוג נוסף מוריד נקודה.`;
+}
+function renderSetupForm(){
+  document.querySelectorAll('#segN button').forEach(b => b.classList.toggle('on', +b.dataset.n === F.n));
+  document.querySelectorAll('#segSp button').forEach(b => b.classList.toggle('on', (b.dataset.sp === '1') === F.surprises));
+  const box = $('#nameInputs');
+  box.innerHTML = '';
+  for (let i = 0; i < F.n; i++){
+    const row = document.createElement('div');
+    row.className = 'name-row';
+    row.style.setProperty('--c', TEAM_COLORS[i]);
+    row.innerHTML = '<span class="dot"></span>';
+    const inp = document.createElement('input');
+    inp.maxLength = 18; inp.value = F.names[i]; inp.placeholder = DEFAULT_NAMES[i]; inp.enterKeyHint = 'done';
+    inp.setAttribute('aria-label', 'שם קבוצה ' + (i + 1));
+    inp.addEventListener('input', () => { F.names[i] = inp.value; });
+    row.appendChild(inp);
+    box.appendChild(row);
+  }
+  $('#durOut').textContent = F.duration;
+  renderSkipSetting();
+}
+function renderSetupScreen(){
+  if (screen === 'game') return;
+  const joinMode = screen === 'join' && remoteG;
+  $('#joinBox').classList.toggle('hidden', !joinMode);
+  $('#setupBox').classList.toggle('hidden', !!joinMode);
+  if (joinMode){
+    $('#joinTeams').innerHTML = remoteG.teams.map((t, i) =>
+      `<button class="join-team" data-act="join" data-i="${i}" style="--c:${TEAM_COLORS[i]}"><span>${esc(t.name)}</span><span class="js">${t.score}</span></button>`).join('');
+    return;
+  }
+  const multi = MULTI_OK && canWrite;
+  $('#createMultiBtn').classList.toggle('hidden', !multi);
+  const solo = $('#startSoloBtn');
+  solo.textContent = multi ? 'שחק על טלפון אחד' : 'התחל משחק';
+  solo.className = multi ? 'secondary-btn' : 'primary-btn';
+  solo.style.marginTop = multi ? '10px' : '18px';
+  $('#backToJoin').classList.toggle('hidden', !(MULTI_OK && remoteG));
+  $('#statusLine').textContent =
+    connecting ? 'מתחבר לשרת המשחק…'
+    : MULTI_OK ? 'כל אחד פותח את הקישור בטלפון שלו ובוחר קבוצה.'
+    : 'אין חיבור לשרת המשחק כרגע, אז אפשר לשחק על טלפון אחד.';
+}
+
+function startSolo(){
+  SFX.unlock(); keepAwake();
+  MODE = 'solo'; ME.team = null; editing = -1;
+  G = freshGame(); G.rev = 1;
+  showGame(); renderAll();
+}
+function createMulti(){
+  if (!MULTI_OK || !canWrite) return;
+  SFX.unlock();
+  MODE = 'multi'; editing = -1;
+  const g = strip(freshGame()); g.rev = 1;
+  G = g; remoteG = g; autoRouted = true;
+  queueWrite(g);
+  showJoin();
+}
+function joinTeam(i){
+  if (!remoteG) return;
+  SFX.unlock(); keepAwake();
+  MODE = 'multi'; editing = -1;
+  if (!G || G.gid !== remoteG.gid) G = clone(remoteG);
+  ME.team = i;
+  LS.set('taboo-team-' + G.gid, String(i));
+  announce();
+  showGame(); renderAll();
+}
+
+/* ================= תפקיד הטלפון ================= */
+function role(){
+  if (MODE === 'solo') return 'solo';
+  if (ME.team == null) return 'none';
+  const ph = effPhase(G);
+  if (G.explainer && G.explainer === ME.id && ph !== 'ready') return 'explainer';
+  return ME.team === G.active ? 'guesser' : 'opponent';
+}
+function roleLabel(){
+  const r = role(), ph = effPhase(G);
+  if (r === 'explainer') return '🎤 מסביר';
+  if (r === 'guesser') return ph === 'ready' ? '⭐ התור שלכם' : '🙈 מנחשים';
+  if (r === 'opponent') return '👀 שומרים';
+  return '';
+}
+
+/* ================= אפקטים לפי שינויי מצב (רצים בכל הטלפונים) ================= */
+function onState(prev, g){
+  let anim = null, bump = -1;
+  if (prev && prev.gid === g.gid && screen === 'game'){
+    if (g.ev.n > prev.ev.n){
+      const e = g.ev, mine = role() === 'explainer' || MODE === 'solo';
+      if (e.t === 'ok'){ SFX.ok(); FX.fromCard(28, 0.9); anim = 'flash-ok'; bump = e.team; if (mine) vibrate(35); }
+      else if (e.t === 'streak'){ SFX.streak(); showToast(`🔥 ${e.streak} ברצף!`, e.streak >= 5); FX.fromCard(e.streak >= 5 ? 70 : 50, 1.15); anim = 'flash-ok'; bump = e.team; if (mine) vibrate(35); }
+      else if (e.t === 'ok2'){ SFX.streak(); showToast('⭐ +2 נקודות!', true); FX.fromCard(70, 1.15); anim = 'flash-ok'; bump = e.team; if (mine) vibrate(35); }
+      else if (e.t === 'skip'){ SFX.no(); anim = 'flash-no'; if (mine) vibrate([25, 50, 25]); }
+      else if (e.t === 'pen'){ SFX.penalty(); anim = 'flash-no'; bump = e.team; if (mine) vibrate([60, 60, 60]); }
+      else if (e.t === 'buzz'){ SFX.buzz(); showToast('🚨 בוז! מילה אסורה', true); flashScreen(); anim = 'flash-no'; vibrate([200, 80, 200]); }
+    }
+    if (g.phase === 'timeup' && prev.phase !== 'timeup'){ SFX.buzzer(); vibrate([400, 120, 400, 120, 900]); flashScreen(); }
+    if (g.phase === 'reveal' && prev.phase !== 'reveal'){ setTimeout(() => { SFX.special(); vibrate([40, 40, 40, 40, 120]); }, 180); }
+  }
+  if (screen === 'game') renderAll({ anim, bump });
+}
+
+/* ================= שעון מקומי (100ms) ================= */
+let lastEff = null, lastCd = 0, lastTick = null;
+setInterval(() => {
+  if (screen !== 'game' || !G) return;
+  const ph = effPhase(G);
+  if (ph !== lastEff){
+    if (lastEff === 'countdown' && ph === 'running'){ SFX.go(); vibrate(80); }
+    lastEff = ph; lastCd = 0;
+    renderAll();
+  }
+  if (ph === 'countdown'){
+    const n = Math.ceil((G.goAt - now()) / COUNT_MS);
+    if (n !== lastCd){ lastCd = n; SFX.count(); renderCard(); }
+  }
+  if (ph === 'running'){
+    const rem = remOf(G), sec = Math.ceil(rem);
+    if (sec !== lastTick){ lastTick = sec; if (sec <= 5 && sec > 0) SFX.tick(sec); }
+    if (rem <= 0){
+      const mine = MODE === 'solo' || G.explainer === ME.id;
+      if (mine || now() > G.endAt + 2500) A.timeUp();
+    }
+  }
+  renderTimer();
+}, 100);
+
+/* ================= רינדור ================= */
+function setTeamColor(el, i){
+  el.style.setProperty('--tc', TEAM_COLORS[i]);
+  el.style.setProperty('--tcrgb', TEAM_RGB[i]);
+}
+function teamCounts(){
+  const c = {};
+  for (const p of Object.values(presenceData || {})){
+    if (!p || p.gid !== G.gid || typeof p.team !== 'number' || typeof p.t !== 'number') continue;
+    if (now() - p.t > 50000) continue;   // טלפון שלא דיווח כמעט דקה – כבר לא מחובר
+    c[p.team] = (c[p.team] || 0) + 1;
+  }
+  return c;
+}
+function renderScore(bump){
+  const sb = $('#scoreboard');
+  sb.style.setProperty('--n', G.teams.length);
+  const counts = MODE === 'multi' ? teamCounts() : null;
+  sb.innerHTML = G.teams.map((t, i) => `
+    <div class="team ${i === G.active ? 'active' : ''} ${i === editing ? 'editing' : ''}" data-i="${i}">
+      <div class="tname">${esc(t.name)}</div>
+      <div class="score ${i === bump ? 'bump' : ''}">${t.score}</div>
+      ${counts ? `<div class="tppl">👥 ${counts[i] || 0}${ME.team === i ? ' כולל אותך' : ''}</div>` : ''}
+      <div class="adj">
+        <button data-adj="1" aria-label="הוסף נקודה">+</button>
+        <span class="val">${t.score}</span>
+        <button data-adj="-1" aria-label="הורד נקודה">−</button>
+      </div>
+    </div>`).join('');
+  sb.querySelectorAll('.team').forEach((el, i) => setTeamColor(el, i));
+}
+
+/* מקטין את הטקסט בהדרגה עד שכל תוכן הכרטיס נכנס בלי חיתוך */
+function fitCard(){
+  const c = $('#card');
+  const body = c.querySelector('.card-body');
+  const inner = c.querySelector('.card-inner');
+  if (!body || !inner) return;
+  const overflows = () => {
+    if (inner.offsetHeight > body.clientHeight + 1) return true;
+    for (const el of inner.querySelectorAll('.word,.sub,.tag,.state-title,.sp-banner,.sp-x2')){
+      if (el.scrollWidth > el.clientWidth + 1) return true;
+    }
+    return false;
+  };
+  let k = 1;
+  c.style.setProperty('--k', k);
+  while (k > 0.4 && overflows()){
+    k = Math.round((k - 0.04) * 100) / 100;
+    c.style.setProperty('--k', k);
+  }
+}
+
+function renderCard(anim){
+  const c = $('#card');
+  c.className = 'card';
+  setTeamColor(c, G.active);
+  const g = G, r = role(), ph = effPhase(g);
+  const team = esc(g.teams[g.active].name);
+  const nextName = esc(g.teams[(g.active + 1) % g.teams.length].name);
+  const canDrive = r === 'solo' || r === 'explainer';
+  let head = '', inner = '', overlay = '';
+
+  if (ph === 'countdown'){
+    const n = Math.max(1, Math.ceil((g.goAt - now()) / COUNT_MS));
+    const sub = r === 'explainer' ? 'אתה מסביר!' : r === 'guesser' ? 'תתכוננו לנחש!' : r === 'opponent' ? 'אתם שומרים על המילים האסורות 👀' : `התור של <b>${team}</b>`;
+    inner = `<div class="count-num">${n}</div><div class="state-hint">${sub}</div>`;
+  } else if (ph === 'timeup'){
+    const t = g.turn;
+    inner = `
+      <div class="big-icon">⏰</div>
+      <div class="state-title r">נגמר הזמן!</div>
+      <div class="summary">
+        <span class="pill"><b class="g">${t.tc}</b>נכונות</span>
+        <span class="pill"><b class="r">${t.ts}</b>דילוגים</span>
+        ${t.tp ? `<span class="pill"><b class="a"><bdi dir="ltr">−${t.tp}</bdi></b>קנס</span>` : ''}
+        ${t.buzz ? `<span class="pill"><b class="r">🚨${t.buzz}</b>בוז</span>` : ''}
+        ${t.best >= 3 ? `<span class="pill"><b class="r">🔥${t.best}</b>רצף שיא</span>` : ''}
+      </div>
+      <div class="state-hint">לחצו <b>העבר תור</b> כדי לעבור ל${nextName}.</div>`;
+  } else if (ph === 'reveal' && g.special){
+    c.classList.add('special');
+    inner = `
+      <div class="sp-kicker">קלף הפתעה!</div>
+      <div class="sp-emoji">${g.special.e}</div>
+      <div class="state-title">${esc(g.special.t)}</div>
+      <div class="state-hint">${esc(g.special.d)}</div>
+      <div class="sp-x2">תשובה נכונה בכרטיס הבא = 2 נקודות</div>
+      ${canDrive ? '<button class="sp-go" data-act="go">יאללה!</button>' : '<div class="state-hint">מחכים שהמסביר ילחץ "יאללה!"</div>'}`;
+  } else if (ph === 'ready'){
+    const stepper = (r === 'solo' || r === 'guesser') ? `
+      <div class="dur"><span>משך תור</span>
+        <div class="stepper">
+          <button data-act="dplus" aria-label="הוסף 5 שניות">+</button>
+          <output>${g.set.duration}</output>
+          <button data-act="dminus" aria-label="הפחת 5 שניות">−</button>
+        </div>
+      </div>` : '';
+    const hint = r === 'solo' ? 'אחרי <b>התחל תור</b> תהיה ספירה 3‑2‑1 והכרטיס יופיע.'
+      : r === 'guesser' ? 'מי שמסביר לוחץ <b>אני מסביר!</b> בטלפון שלו.'
+      : 'מחכים שמישהו מהם יתחיל להסביר. אתם תשמרו על המילים האסורות 👀';
+    inner = `
+      <div class="state-kicker">${r === 'guesser' ? 'התור שלכם!' : 'מוכנים?'}</div>
+      <div class="state-title" style="color:var(--tc)">התור של ${team}</div>
+      <div class="state-hint">${hint}</div>${stepper}`;
+  } else if (g.card != null){
+    const sp = g.special ? `<div class="sp-banner">${g.special.e} ${esc(g.special.t)} – שווה 2</div>` : '';
+    if (g.special) c.classList.add('special');
+    if (r === 'guesser'){
+      inner = `
+        ${sp}
+        <div class="guess-emoji">🙈</div>
+        <div class="state-title" style="color:var(--tc)">תנחשו!</div>
+        <div class="summary"><span class="pill"><b class="g">${g.turn.tc}</b>נכונות בתור</span></div>`;
+    } else {
+      const card = cards[g.card];
+      const { main, sub } = splitWord(card.word);
+      const len = main.length;
+      const sizeCls = len > 16 ? 'xlong' : len > 9 ? 'long' : '';
+      const right = g.turn.streak >= 2
+        ? `<span class="ccount hot">🔥 ${g.turn.streak} ברצף</span>`
+        : `<span class="ccount">כרטיס ${g.drawn}</span>`;
+      head = `<div class="card-head"><span class="ctag">${team}</span>${right}</div>`;
+      inner = `
+        ${sp}
+        <div class="word ${sizeCls}" dir="auto">${esc(main)}</div>
+        ${sub ? `<div class="sub" dir="auto">${esc(sub)}</div>` : ''}
+        <div class="forbid-box">
+          <div class="forbid-title">🚫 מילים אסורות</div>
+          <div class="forbidden">${card.forbidden.map(f => `<span class="tag" dir="auto">${esc(f)}</span>`).join('')}</div>
+        </div>`;
+    }
+    overlay = `<div class="overlay">❚❚ מושהה<small>${canDrive ? 'לחצו המשך כדי לחזור' : 'מחכים למסביר'}</small></div>`;
+    if (ph === 'paused') c.classList.add('paused');
+  }
+
+  c.innerHTML = `${head}<div class="card-body"><div class="card-inner">${inner}</div></div>${overlay}`;
+  fitCard();
+  if (anim){ void c.offsetWidth; c.classList.add(anim); }
+}
+
+function renderTimer(){
+  const g = G, ph = effPhase(g);
+  const rem = remOf(g);
+  const sec = Math.max(0, Math.ceil(rem - 1e-6));
+  $('#tNum').textContent = sec;
+  const frac = Math.min(1, g.set.duration ? rem / g.set.duration : 0);
+  $('#tFill').style.width = (frac * 100).toFixed(2) + '%';
+  const tp = $('#timerPanel');
+  const live = ph === 'running' || ph === 'paused';
+  tp.classList.toggle('warn', live && sec <= 10 && sec > 5);
+  tp.classList.toggle('danger', live && sec <= 5);
+  tp.classList.toggle('done', ph === 'timeup');
+  $('#timerState').textContent =
+    ph === 'countdown' ? 'מתכוננים…' : ph === 'reveal' ? 'קלף הפתעה!' : ph === 'timeup' ? 'נגמר הזמן'
+    : ph === 'running' ? 'רץ' : ph === 'paused' ? 'מושהה' : 'מוכן';
+  $('#roleTag').textContent = roleLabel();
+}
+
+function renderActions(){
+  const el = $('#actions'), r = role(), ph = effPhase(G);
+  const live = ph === 'running' && G.card != null;
+  let html = '', one = false;
+  if (r === 'solo' || r === 'explainer'){
+    const left = skipsLeftOf(G);
+    const badge = left === Infinity ? '' : left > 0
+      ? `<bdi class="badge" dir="ltr">${left}</bdi>` : '<bdi class="badge pen" dir="ltr">−1</bdi>';
+    const lbl = left === Infinity ? 'דלג' : left > 0 ? `דלג, נשארו ${left}` : 'דלג, עולה נקודה';
+    html = `<button class="btn-big ok" data-act="ok" ${live ? '' : 'disabled'}><span class="ic">✓</span>נכון</button>
+            <button class="btn-big no" data-act="no" aria-label="${lbl}" ${live ? '' : 'disabled'}><span class="ic">✗</span>דלג${badge}</button>`;
+  } else if (r === 'opponent' && ['countdown', 'running', 'paused', 'reveal'].includes(ph)){
+    html = `<button class="buzz-btn" data-act="buzz" ${live ? '' : 'disabled'}>🚨 בוז!</button>`;
+    one = true;
+  }
+  el.innerHTML = html;
+  el.className = 'actions' + (one ? ' one' : '') + (html ? '' : ' hidden');
+}
+function ctrlButtons(){
+  const r = role(), ph = effPhase(G);
+  if (r === 'solo' || r === 'explainer'){
+    const main =
+      ph === 'countdown' ? { act: 'none', label: 'מתחילים…', dis: true }
+      : ph === 'reveal' ? { act: 'go', label: 'יאללה!' }
+      : ph === 'timeup' ? { act: 'none', label: 'הזמן נגמר', dis: true }
+      : ph === 'running' ? { act: 'pause', label: '❚❚ השהה', cls: 'pausing' }
+      : ph === 'paused' ? { act: 'resume', label: '▶ המשך' }
+      : { act: 'start', label: '▶ התחל תור' };
+    main.cls = 'main-ctl ' + (main.cls || '');
+    return [{ act: 'reset', label: 'איפוס' }, main, { act: 'next', label: 'העבר תור', cls: ph === 'timeup' ? 'pulse' : '' }];
+  }
+  if (ph === 'timeup') return [{ act: 'next', label: 'העבר תור', cls: 'main-ctl' }];
+  if (ph === 'ready' && r === 'guesser') return [{ act: 'start', label: '🎤 אני מסביר!', cls: 'main-ctl' }];
+  return [];
+}
+function renderCtrls(){
+  const el = $('#ctrls'), items = ctrlButtons();
+  el.innerHTML = items.map(b => `<button class="ctl ${b.cls || ''}" data-act="${b.act}" ${b.dis ? 'disabled' : ''}>${b.label}</button>`).join('');
+  el.className = 'ctrls' + (items.length === 1 ? ' one' : '') + (items.length ? '' : ' hidden');
+}
+function renderAll(o = {}){
+  if (screen !== 'game' || !G) return;
+  renderScore(o.bump);
+  renderTimer();
+  renderActions();
+  renderCtrls();
+  renderCard(o.anim);
+  const mb = $('#muteBtn');
+  mb.textContent = SFX.isMuted() ? '🔇' : '🔊';
+  mb.classList.toggle('on', SFX.isMuted());
+}
+
+/* ================= תפריט ================= */
+let newArmed = 0;
+function toggleMenu(){
+  const m = $('#menu');
+  $('#mTeam').classList.toggle('hidden', MODE !== 'multi');
+  newArmed = 0; $('#mNew').textContent = 'משחק חדש';
+  m.classList.toggle('open');
+}
+function closeMenu(){ $('#menu').classList.remove('open'); }
+
+/* ================= אירועים ================= */
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b){ if (!e.target.closest('#menu')) closeMenu(); return; }
+  const a = b.dataset.act;
+  if (a !== 'menu' && !b.closest('#menu')) closeMenu();
+  switch (a){
+    case 'start': SFX.unlock(); keepAwake(); A.start(); break;
+    case 'pause': A.pause(); break;
+    case 'resume': A.resume(); break;
+    case 'go': A.go(); break;
+    case 'ok': A.answer(true); break;
+    case 'no': A.answer(false); break;
+    case 'buzz': A.buzz(); break;
+    case 'reset': A.reset(); break;
+    case 'next': A.next(); break;
+    case 'dplus': A.dur(5); break;
+    case 'dminus': A.dur(-5); break;
+    case 'join': joinTeam(+b.dataset.i); break;
+    case 'show-setup': showSetup(); break;
+    case 'show-join': showJoin(); break;
+    case 'mute': SFX.toggle(); renderAll(); break;
+    case 'menu': toggleMenu(); break;
+    case 'm-reset': closeMenu(); A.reset(); break;
+    case 'm-next': closeMenu(); A.next(); break;
+    case 'm-team': closeMenu(); remoteG = remoteG || G; showJoin(); break;
+    case 'm-new':
+      if (now() - newArmed > 3000){ newArmed = now(); b.textContent = 'לחצו שוב לאישור'; return; }
+      newArmed = 0; closeMenu(); showSetup(); break;
+  }
+});
+$('#scoreboard').addEventListener('click', e => {
+  const teamEl = e.target.closest('.team'); if (!teamEl) return;
+  const i = +teamEl.dataset.i;
+  const adj = e.target.closest('button[data-adj]');
+  if (adj){ A.adj(i, +adj.dataset.adj); return; }
+  editing = editing === i ? -1 : i;
+  renderScore();
+});
+$('#segN').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; F.n = +b.dataset.n; renderSetupForm(); });
+$('#segSp').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; F.surprises = b.dataset.sp === '1'; renderSetupForm(); });
+$('#durPlus').onclick   = () => { F.duration = clampDur(F.duration + 5); $('#durOut').textContent = F.duration; };
+$('#durMinus').onclick  = () => { F.duration = clampDur(F.duration - 5); $('#durOut').textContent = F.duration; };
+$('#skipPlus').onclick  = () => { F.skipLimit = clampSkip(F.skipLimit + 1); renderSkipSetting(); };
+$('#skipMinus').onclick = () => { F.skipLimit = clampSkip(F.skipLimit - 1); renderSkipSetting(); };
+$('#startSoloBtn').onclick = startSolo;
+$('#createMultiBtn').onclick = createMulti;
+$('#leadText').textContent = `מסבירים מושג בלי המילים האסורות. ${cards.length} כרטיסים, ואחרי שכולם יוצאים החפיסה מתערבבת מחדש.`;
+
+// התאמה מחדש כשהמסך משתנה (סיבוב, סרגל כתובת שנעלם וכו׳)
+let fitRaf = 0;
+const refit = () => { cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(fitCard); };
+window.addEventListener('resize', refit);
+window.addEventListener('orientationchange', refit);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', refit);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
+
+boot();
+</script>
+</body>
+</html>
