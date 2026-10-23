@@ -834,22 +834,34 @@ async function syncClock(){
 }
 function refreshNow(){ if (MULTI_OK) getJSON(GAME_PATH).then(d => applyRemote(d, false)).catch(() => {}); }
 
-async function boot(){
-  ME.id = deviceId();
-  renderSetupForm();
-  renderSetupScreen();
+let connErr = '', connTries = 0;
+function describeErr(e){
+  if (!e) return 'שגיאה לא ידועה';
+  if (e.name === 'AbortError') return 'השרת לא ענה בזמן';
+  if (e.message && e.message.startsWith('http ')) return 'השרת החזיר ' + e.message.slice(5);
+  return 'אין גישה לשרת';
+}
+async function connect(){
+  connTries++;
   try {
     const data = await getJSON(GAME_PATH);
-    MULTI_OK = true;
+    MULTI_OK = true; connErr = '';
     await syncClock();
     connecting = false;
     applyRemote(data, false);
     GSTREAM = openStream(GAME_PATH, d => applyRemote(d, false));
     PSTREAM = openStream('presence', d => { presenceData = d || {}; if (screen === 'game') renderScore(); });
   } catch (e){
-    connecting = false; MULTI_OK = false;
+    MULTI_OK = false; connecting = false; connErr = describeErr(e);
+    setTimeout(connect, Math.min(10000, 2000 * connTries));   // מנסה שוב לבד
   }
   renderSetupScreen();
+}
+async function boot(){
+  ME.id = deviceId();
+  renderSetupForm();
+  renderSetupScreen();
+  connect();
 }
 // רשת ביטחון: אם הזרם החי נקטע (טלפון שנכנס לשינה וכו'), מושכים את המצב כל כמה שניות
 setInterval(() => { if (MULTI_OK && MODE === 'multi'){ GSTREAM && GSTREAM.ensure(); PSTREAM && PSTREAM.ensure(); refreshNow(); } }, 4000);
@@ -918,7 +930,7 @@ function renderSetupScreen(){
   $('#statusLine').textContent =
     connecting ? 'מתחבר לשרת המשחק…'
     : MULTI_OK ? 'כל אחד פותח את הקישור בטלפון שלו ובוחר קבוצה.'
-    : 'אין חיבור לשרת המשחק כרגע, אז אפשר לשחק על טלפון אחד.';
+    : `אין חיבור לשרת המשחק (${connErr}). מנסה שוב… בינתיים אפשר לשחק על טלפון אחד.`;
 }
 
 function startSolo(){
