@@ -263,6 +263,15 @@ button:disabled{cursor:not-allowed}
 .join-teams{display:grid;gap:10px;margin:6px 0 16px}
 .join-team{display:flex;align-items:center;justify-content:space-between;padding:18px;border-radius:16px;background:#fff;border:2px solid var(--c);font-size:21px;font-weight:800;color:var(--text)}
 .join-team .js{font-family:var(--mono);color:var(--c)}
+.join-team.judge{border-style:dashed;margin-top:6px}
+.judge-pass{display:grid;grid-template-columns:1fr auto;gap:8px;margin:-4px 0 14px}
+.judge-pass input{min-width:0;border:2px solid #b86a00;border-radius:14px;padding:12px 14px;font:inherit;font-size:20px;font-weight:700;letter-spacing:.2em;text-align:center;background:#fff;color:var(--text);outline:0}
+.judge-pass .primary-btn{width:auto;margin:0;padding:0 22px;font-size:18px}
+.judge-pass .perr{grid-column:1/-1;color:var(--ti);font-size:14px;font-weight:700;min-height:1.2em;text-align:center}
+.actions.three{grid-template-columns:1fr 1fr 1fr}
+.actions.three .btn-big,.actions.three .buzz-btn{height:clamp(56px,10vh,84px);font-size:clamp(17px,5vw,25px);gap:5px;padding:0 4px}
+.actions.three .buzz-btn{background:#ffb020;color:#2b1a00;box-shadow:0 10px 22px -12px rgba(184,106,0,.8)}
+.join-team .jsub{font-size:13px;font-weight:600;color:var(--muted)}
 .link-btn{background:none;border:0;color:var(--muted);text-decoration:underline;font-size:15px;padding:10px;width:100%}
 .secondary-btn{width:100%;margin-top:10px;padding:15px;border-radius:16px;border:1px solid var(--line-2);background:#fff;font-size:18px;font-weight:800;color:var(--text)}
 .status-line{font-size:13px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5}
@@ -285,8 +294,13 @@ button:disabled{cursor:not-allowed}
     <h1>טאבו <span class="team-line">קבוצת System</span></h1>
 
     <div id="joinBox" class="hidden">
-      <p class="lead">יש משחק פעיל. באיזו קבוצה אתם?</p>
+      <p class="lead">יש משחק פעיל. באיזו קבוצה אתם? (או שופט)</p>
       <div class="join-teams" id="joinTeams"></div>
+      <div class="judge-pass hidden" id="judgePass">
+        <input id="judgePin" type="password" inputmode="numeric" maxlength="8" placeholder="סיסמת שופט" autocomplete="off" aria-label="סיסמת שופט">
+        <button class="primary-btn" data-act="judge-ok">כניסה</button>
+        <p class="perr" id="judgeErr"></p>
+      </div>
       <button class="link-btn" data-act="show-setup">פתיחת משחק חדש במקום</button>
     </div>
 
@@ -850,7 +864,7 @@ async function connect(){
     connecting = false;
     applyRemote(data, false);
     GSTREAM = openStream(GAME_PATH, d => applyRemote(d, false));
-    PSTREAM = openStream('presence', d => { presenceData = d || {}; if (screen === 'game') renderScore(); });
+    PSTREAM = openStream('presence', d => { presenceData = d || {}; if (screen === 'game'){ renderScore(); renderActions(); } });
   } catch (e){
     MULTI_OK = false; connecting = false; connErr = describeErr(e);
     setTimeout(connect, Math.min(10000, 2000 * connTries));   // מנסה שוב לבד
@@ -917,7 +931,8 @@ function renderSetupScreen(){
   $('#setupBox').classList.toggle('hidden', !!joinMode);
   if (joinMode){
     $('#joinTeams').innerHTML = remoteG.teams.map((t, i) =>
-      `<button class="join-team" data-act="join" data-i="${i}" style="--c:${TEAM_COLORS[i]}"><span>${esc(t.name)}</span><span class="js">${t.score}</span></button>`).join('');
+      `<button class="join-team" data-act="join" data-i="${i}" style="--c:${TEAM_COLORS[i]}"><span>${esc(t.name)}</span><span class="js">${t.score}</span></button>`).join('')
+      + `<button class="join-team judge" data-act="join" data-i="-1" style="--c:#b86a00"><span>⚖️ שופט/ת</span><span class="jsub">מסמן נקודות ולוחץ בוז, בסיסמה</span></button>`;
     return;
   }
   const multi = MULTI_OK && canWrite;
@@ -963,6 +978,7 @@ function joinTeam(i){
 function role(){
   if (MODE === 'solo') return 'solo';
   if (ME.team == null) return 'none';
+  if (ME.team === -1) return 'judge';
   const ph = effPhase(G);
   if (G.explainer && G.explainer === ME.id && ph !== 'ready') return 'explainer';
   return ME.team === G.active ? 'guesser' : 'opponent';
@@ -971,7 +987,8 @@ function roleLabel(){
   const r = role(), ph = effPhase(G);
   if (r === 'explainer') return '🎤 מסביר';
   if (r === 'guesser') return ph === 'ready' ? '⭐ התור שלכם' : '🙈 מנחשים';
-  if (r === 'opponent') return '👀 שומרים';
+  if (r === 'opponent') return ph === 'ready' ? '⏳ התור שלהם' : '🍿 הם מסבירים';
+  if (r === 'judge') return '⚖️ שופט';
   return '';
 }
 
@@ -1024,10 +1041,16 @@ function setTeamColor(el, i){
   el.style.setProperty('--tc', TEAM_COLORS[i]);
   el.style.setProperty('--tcrgb', TEAM_RGB[i]);
 }
+// יש שופט מחובר למשחק? (לפי דיווחי הנוכחות של הטלפונים)
+function judgeOnline(){
+  if (MODE !== 'multi' || !G) return false;
+  if (ME.team === -1) return true;
+  return Object.values(presenceData || {}).some(p => p && p.gid === G.gid && p.team === -1 && typeof p.t === 'number' && now() - p.t < 50000);
+}
 function teamCounts(){
   const c = {};
   for (const p of Object.values(presenceData || {})){
-    if (!p || p.gid !== G.gid || typeof p.team !== 'number' || typeof p.t !== 'number') continue;
+    if (!p || p.gid !== G.gid || typeof p.team !== 'number' || p.team < 0 || typeof p.t !== 'number') continue;
     if (now() - p.t > 50000) continue;   // טלפון שלא דיווח כמעט דקה – כבר לא מחובר
     c[p.team] = (c[p.team] || 0) + 1;
   }
@@ -1079,12 +1102,14 @@ function renderCard(anim){
   const g = G, r = role(), ph = effPhase(g);
   const team = esc(g.teams[g.active].name);
   const nextName = esc(g.teams[(g.active + 1) % g.teams.length].name);
-  const canDrive = r === 'solo' || r === 'explainer';
+  const canDrive = r === 'solo' || r === 'explainer' || r === 'judge';
   let head = '', inner = '', overlay = '';
 
   if (ph === 'countdown'){
     const n = Math.max(1, Math.ceil((g.goAt - now()) / COUNT_MS));
-    const sub = r === 'explainer' ? 'אתה מסביר!' : r === 'guesser' ? 'תתכוננו לנחש!' : r === 'opponent' ? 'אתם שומרים על המילים האסורות 👀' : `התור של <b>${team}</b>`;
+    const sub = r === 'explainer' ? (judgeOnline() ? 'אתה מסביר! השופט מסמן ✓ ו-✗' : 'אתה מסביר!')
+      : r === 'guesser' ? 'תתכוננו לנחש!'
+      : r === 'judge' ? 'אתה שופט: מסמן ✓ ו-✗ ולוחץ בוז על מילה אסורה ⚖️' : `התור של <b>${team}</b>`;
     inner = `<div class="count-num">${n}</div><div class="state-hint">${sub}</div>`;
   } else if (ph === 'timeup'){
     const t = g.turn;
@@ -1107,7 +1132,7 @@ function renderCard(anim){
       <div class="state-title">${esc(g.special.t)}</div>
       <div class="state-hint">${esc(g.special.d)}</div>
       <div class="sp-x2">תשובה נכונה בכרטיס הבא = 2 נקודות</div>
-      ${canDrive ? '<button class="sp-go" data-act="go">יאללה!</button>' : '<div class="state-hint">מחכים שהמסביר ילחץ "יאללה!"</div>'}`;
+      ${canDrive ? '<button class="sp-go" data-act="go">יאללה!</button>' : '<div class="state-hint">מחכים שהמסביר או השופט ילחצו "יאללה!"</div>'}`;
   } else if (ph === 'ready'){
     const stepper = (r === 'solo' || r === 'guesser') ? `
       <div class="dur"><span>משך תור</span>
@@ -1119,9 +1144,10 @@ function renderCard(anim){
       </div>` : '';
     const hint = r === 'solo' ? 'אחרי <b>התחל תור</b> תהיה ספירה 3‑2‑1 והכרטיס יופיע.'
       : r === 'guesser' ? 'מי שמסביר לוחץ <b>אני מסביר!</b> בטלפון שלו.'
-      : 'מחכים שמישהו מהם יתחיל להסביר. אתם תשמרו על המילים האסורות 👀';
+      : r === 'judge' ? 'מחכים שמישהו מהם יתחיל להסביר. אתה שופט ⚖️'
+      : 'מחכים שמישהו מהם יתחיל להסביר. התור שלכם אחריהם.';
     inner = `
-      <div class="state-kicker">${r === 'guesser' ? 'התור שלכם!' : 'מוכנים?'}</div>
+      <div class="state-kicker">${r === 'guesser' ? 'התור שלכם!' : r === 'opponent' ? 'עכשיו הם' : 'מוכנים?'}</div>
       <div class="state-title" style="color:var(--tc)">התור של ${team}</div>
       <div class="state-hint">${hint}</div>${stepper}`;
   } else if (g.card != null){
@@ -1132,6 +1158,12 @@ function renderCard(anim){
         ${sp}
         <div class="guess-emoji">🙈</div>
         <div class="state-title" style="color:var(--tc)">תנחשו!</div>
+        <div class="summary"><span class="pill"><b class="g">${g.turn.tc}</b>נכונות בתור</span></div>`;
+    } else if (r === 'opponent'){
+      inner = `
+        ${sp}
+        <div class="guess-emoji">🍿</div>
+        <div class="state-title" style="color:var(--tc)">${team} מסבירים</div>
         <div class="summary"><span class="pill"><b class="g">${g.turn.tc}</b>נכונות בתור</span></div>`;
     } else {
       const card = cards[g.card];
@@ -1181,20 +1213,22 @@ function renderTimer(){
 function renderActions(){
   const el = $('#actions'), r = role(), ph = effPhase(G);
   const live = ph === 'running' && G.card != null;
-  let html = '', one = false;
-  if (r === 'solo' || r === 'explainer'){
-    const left = skipsLeftOf(G);
-    const badge = left === Infinity ? '' : left > 0
-      ? `<bdi class="badge" dir="ltr">${left}</bdi>` : '<bdi class="badge pen" dir="ltr">−1</bdi>';
-    const lbl = left === Infinity ? 'דלג' : left > 0 ? `דלג, נשארו ${left}` : 'דלג, עולה נקודה';
-    html = `<button class="btn-big ok" data-act="ok" ${live ? '' : 'disabled'}><span class="ic">✓</span>נכון</button>
+  const left = skipsLeftOf(G);
+  const badge = left === Infinity ? '' : left > 0
+    ? `<bdi class="badge" dir="ltr">${left}</bdi>` : '<bdi class="badge pen" dir="ltr">−1</bdi>';
+  const lbl = left === Infinity ? 'דלג' : left > 0 ? `דלג, נשארו ${left}` : 'דלג, עולה נקודה';
+  const okNo = `<button class="btn-big ok" data-act="ok" ${live ? '' : 'disabled'}><span class="ic">✓</span>נכון</button>
             <button class="btn-big no" data-act="no" aria-label="${lbl}" ${live ? '' : 'disabled'}><span class="ic">✗</span>דלג${badge}</button>`;
-  } else if (r === 'opponent' && ['countdown', 'running', 'paused', 'reveal'].includes(ph)){
-    html = `<button class="buzz-btn" data-act="buzz" ${live ? '' : 'disabled'}>🚨 בוז!</button>`;
-    one = true;
+  let html = '', cls = '';
+  if (r === 'judge' && ['countdown', 'running', 'paused', 'reveal'].includes(ph)){
+    // השופט מסמן נכון/דלג ולוחץ בוז על מילה אסורה
+    html = okNo + `<button class="buzz-btn" data-act="buzz" ${live ? '' : 'disabled'}>🚨 בוז</button>`;
+    cls = ' three';
+  } else if (r === 'solo' || (r === 'explainer' && !judgeOnline())){
+    html = okNo;
   }
   el.innerHTML = html;
-  el.className = 'actions' + (one ? ' one' : '') + (html ? '' : ' hidden');
+  el.className = 'actions' + cls + (html ? '' : ' hidden');
 }
 function ctrlButtons(){
   const r = role(), ph = effPhase(G);
@@ -1258,7 +1292,13 @@ document.addEventListener('click', e => {
     case 'next': A.next(); break;
     case 'dplus': A.dur(5); break;
     case 'dminus': A.dur(-5); break;
-    case 'join': joinTeam(+b.dataset.i); break;
+    case 'join':
+      if (+b.dataset.i === -1 && LS.get('taboo-judge-ok') !== '1'){
+        $('#judgePass').classList.remove('hidden'); $('#judgeErr').textContent = ''; $('#judgePin').value = '';
+        $('#judgePin').focus(); break;
+      }
+      joinTeam(+b.dataset.i); break;
+    case 'judge-ok': checkJudgePin(); break;
     case 'show-setup': showSetup(); break;
     case 'show-join': showJoin(); break;
     case 'mute': SFX.toggle(); renderAll(); break;
@@ -1285,6 +1325,18 @@ $('#durPlus').onclick   = () => { F.duration = clampDur(F.duration + 5); $('#dur
 $('#durMinus').onclick  = () => { F.duration = clampDur(F.duration - 5); $('#durOut').textContent = F.duration; };
 $('#skipPlus').onclick  = () => { F.skipLimit = clampSkip(F.skipLimit + 1); renderSkipSetting(); };
 $('#skipMinus').onclick = () => { F.skipLimit = clampSkip(F.skipLimit - 1); renderSkipSetting(); };
+const JUDGE_PIN = '1406';
+function checkJudgePin(){
+  if ($('#judgePin').value.trim() === JUDGE_PIN){
+    LS.set('taboo-judge-ok', '1');
+    $('#judgePass').classList.add('hidden');
+    joinTeam(-1);
+  } else {
+    $('#judgeErr').textContent = 'סיסמה שגויה';
+    $('#judgePin').value = ''; vibrate(120);
+  }
+}
+$('#judgePin').addEventListener('keydown', e => { if (e.key === 'Enter') checkJudgePin(); });
 $('#startSoloBtn').onclick = startSolo;
 $('#createMultiBtn').onclick = createMulti;
 $('#leadText').textContent = `מסבירים מושג בלי המילים האסורות. ${cards.length} כרטיסים, ואחרי שכולם יוצאים החפיסה מתערבבת מחדש.`;
